@@ -11,5 +11,8 @@
 *.la
 *.a
 
+# editor temp file
+*~
+
 # Bin
 bin/*
