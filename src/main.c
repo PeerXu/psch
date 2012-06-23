@@ -1,29 +1,29 @@
 #include <stdio.h>
-
-#define BUFFSIZE 1024
-
 char *version = "0.0.1";
 
-void eval_loop();
-int read_expr(char *buff);
-int syntax_check(char *expr);
+#define prompt "*>"
+#define BUFFSIZE 1024
 
-void eval_loop() {
+void repl();
+int read(char *buff);
+int syntax_check(char *expr);
+int parse_expr(char *expr);
+
+void repl() {
   char buff[BUFFSIZE];
-  printf("*>");
-  //while(scanf("%s", buff)) {
-  while(read_expr(buff)) {
+  printf(prompt);
+  while(read(buff)) {
     if (!syntax_check(buff)) {
       printf("[ERR]: syntax error\n");
     }
     else {
       printf("%s\n", buff);
     }
-    printf("*>");
+    printf(prompt);
   }
 }
 
-int read_expr(char *buff) {
+int read(char *buff) {
   int size = 0;
   char *buf = buff;
   char c;
@@ -67,6 +67,6 @@ int syntax_check(char *expr) {
 int main(void) {
   printf("pscsh -- scheme interpreter\n");
   printf("version: %s\n", version);
-  eval_loop();
+  repl();
   return 0;
 }
