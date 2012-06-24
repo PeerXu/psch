@@ -17,6 +17,10 @@
 #define debug_log(msg) printf("%s\n", (msg))
 #define debug_malloc_log(t, s) printf("cell type: %s\ncell: %s\n", (t), (s))
 
+#define ltrim(p) while (' ' == *(p)) { ++(p); }
+/* #define rtrim(p) while (' ' == *(p)) { --(p); } */
+
+
 enum _cell_type {
   T_NUMBER=0,
   T_STRING,
@@ -72,10 +76,10 @@ struct cell {
 struct cell heap[2][HEAP_SIZE];
 int free_register = 0;
 int scan_register = 0;
-int current_heap_index = 0;
-int free_heap_index = 1;
-#define CURRENT_HEAP heap[current_heap_index]
-#define FREE_HEAP heap[free_heap_index]
+int current_heap_register = 0;
+int free_heap_register = 1;
+#define CURRENT_HEAP heap[current_heap_register]
+#define FREE_HEAP heap[free_heap_register]
 
 int is_atom(char *s);
 int is_symbol(char *s);
@@ -167,7 +171,7 @@ struct _number *mk_number_float(char *s) {
   return num;
 }
 
-int is_pair_with_dot(char *s) {
+int is_real_pair(char *s) {
   return 0;
 }
 
@@ -212,6 +216,28 @@ int get_pair_car_index(char *s, int *start, int *end) {
 // get_pair_cdr("(+ 1 2 3)", &start, &end) => start: 3, end: 8, result: 1 2 3
 // get_pair_cdr("(1 . 2)", &start, &end) => start: 5, end: 6, result: 2
 int get_pair_cdr_index(char *s, int *start, int *end) {
+  char *ps;
+  int _start, _end, tmp;
+
+  get_pair_car_index(s, &tmp, &_start);
+  ps = s + _start - 1;
+
+  while (' ' == *ps) {
+    ++ps;
+    ++_start;
+  }
+  ++_start;
+  *start = _start;
+
+  _end = strlen(s) - 1;
+  ps = s + _end;
+ 
+  while(' ' == *ps) {
+    --ps;
+    --_end;
+  }
+  *end = _end;
+
   return 0;
 }
 
@@ -236,8 +262,15 @@ struct cell *mk_pair_cdr(char *s) {
   char buff[STRING_BUFF_SIZE];
   int start, end, length;
 
-  get_pair_car_index(s, &start, &end);
+  get_pair_cdr_index(s, &start, &end);
+  length = end - start;
+  buff[0] = '(';
+  strncpy(buff+1, s+start, length);
+  buff[length+1] = ')';
+  buff[length+2] = '\0';
 
+  /* sprintf(buff, "(%s)", buff); */
+  cell = mk_cell(buff);
 
   return cell;
 }
@@ -460,6 +493,30 @@ int is_pair(char *s) {
   return length !=0 && '(' == s[0] && ')' == s[length - 1];
 }
 
+int is_nil(char *s) {
+  char *ps = s;
+  ltrim(ps);
+
+  if ('\'' == *ps) {
+    ++ps;
+  }
+
+  if ('(' != *ps) {
+    return 0;
+  }
+  ++ps;
+
+  while(' ' == *ps) {
+    ++ps;
+  }
+  
+  if (')' != *ps) {
+    return 0;
+  }
+
+  return 1;
+}
+
 int cell_is_atom(struct cell *cell) {
   return cell_is_string(cell) || cell_is_number(cell) || cell_is_symbol(cell);
 }
@@ -512,13 +569,24 @@ int print_number(struct _number *num) {
   return 0;
 }
 
-void test_func__get_pair_car_index(char *string) {
-  char buff[1024];
-  int start, end;
-  get_pair_car_index(string, &start, &end);
-  strncpy(buff, string + start, end - start);
-  buff[end-start] = '\0';
-  printf("(car %s): %s, start:%d, end:%d\n", string, buff, start, end);
+/* void test_func__get_pair_any_index(char *string) { */
+/*   char car_buff[1024], cdr_buff[1024]; */
+/*   int car_start, car_end, cdr_start, cdr_end; */
+
+/*   get_pair_car_index(string, &car_start, &car_end); */
+/*   strncpy(car_buff, string + car_start, car_end - car_start); */
+/*   car_buff[car_end-car_start] = '\0'; */
+
+/*   get_pair_cdr_index(string, &cdr_start, &cdr_end); */
+/*   strncpy(cdr_buff, string + cdr_start, cdr_end - cdr_start); */
+/*   cdr_buff[cdr_end-cdr_start] = '\0'; */
+
+/*   printf("(car %s): %s, start:%d, end:%d\n", string, car_buff, car_start, car_end); */
+/*   printf("(cdr %s): %s, start:%d, end:%d\n", string, cdr_buff, cdr_start, cdr_end); */
+/* } */
+
+void test_func__is_nil(char *s) {
+  printf("is_nil(%s)=%d\n", s, is_nil(s));
 }
 
 int main(void) {
@@ -535,8 +603,16 @@ int main(void) {
   /* buff[end-start] = '\0'; */
   /* printf("(car %s): %s, start:%d, end:%d\n", string, buff, start, end); */
 
-  test_func__get_pair_car_index("(+ 1 2 3)");
-  test_func__get_pair_car_index("(\"abc efg\" 1 2 3)");
-  test_func__get_pair_car_index("((1 2 3 4) 1 2 3 4)");
+  /* test_func__get_pair_any_index("(+ 1 2 3)"); */
+  /* test_func__get_pair_any_index("(\"abc efg\" 1 2 3)"); */
+  /* test_func__get_pair_any_index("((1 2 3 4) 1 2 3 4 5)"); */
+
+  test_func__is_nil("'()");
+  test_func__is_nil("()");
+  test_func__is_nil("(+ 1 2 3)");
+  test_func__is_nil("'(+ 1 2 3)");
+  test_func__is_nil("  '(   )");
+  test_func__is_nil("  '(   )   ");
+
   return 0;
 }
