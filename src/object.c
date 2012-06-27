@@ -1,138 +1,169 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include "object.h"
 
-#define __DEBUG 1
+/* #include <stdio.h> */
+/* #include <stdlib.h> */
+/* #include <string.h> */
+/* #include <ctype.h> */
 
-#define HEAP_SIZE 10240
-#define STRING_BUFF_SIZE 2048
-#define MAX_SYMBOL_LENGTH 128
+/* #define __DEBUG 1 */
 
-#define ERR_OUT_OF_MEMORY "out of memory"
-#define ERR_SYMBOL "error symbol"
-#define ERR_CELL_TYPE "error cell type"
+/* #define HEAP_SIZE 10240 */
+/* #define STRING_BUFF_SIZE 2048 */
+/* #define MAX_SYMBOL_LENGTH 128 */
 
-#define err_log(err_code) printf("%s\n", (err_code))
-#define debug_log(msg) printf("%s\n", (msg))
-#define debug_malloc_log(t, s) printf("cell type: %s\ncell: %s\n", (t), (s))
+/* #define ERR_OUT_OF_MEMORY "out of memory" */
+/* #define ERR_SYMBOL "error symbol" */
+/* #define ERR_CELL_TYPE "error cell type" */
 
-#define ltrim(p) while (' ' == *(p)) { ++(p); }
+/* #define err_log(err_code) printf("%s\n", (err_code)) */
+/* #define debug_log(msg) printf("%s\n", (msg)) */
+/* #define debug_malloc_log(t, s) printf("cell type: %s\ncell: %s\n", (t), (s)) */
+
+/* #define ltrim(p) while (' ' == *(p)) { ++(p); } */
 /* #define rtrim(p) while (' ' == *(p)) { --(p); } */
 
+/* enum _cell_type { */
+/*   T_NIL=0, */
+/*   T_FALSE, */
+/*   T_TRUE, */
+/*   T_MAX_CONSTANT, */
+/*   T_NUMBER, */
+/*   T_STRING, */
+/*   T_PAIR, */
+/*   T_SYMBOL */
+/* }; */
 
-enum _cell_type {
-  T_NUMBER=0,
-  T_STRING,
-  T_PAIR,
-  T_SYMBOL,
-  T_NIL,
-  T_FALSE,
-  T_TRUE
-};
+/* enum _num_type { */
+/*   NT_INTEGER=0, */
+/*   NT_DOUBLE=1 */
+/* }; */
 
-enum _num_type {
-  NT_INTEGER=0,
-  NT_DOUBLE=1
-};
+/* struct _string { */
+/*   char _data[STRING_BUFF_SIZE]; */
+/*   unsigned int _length; */
+/* }; */
 
-struct _string {
-  char _data[STRING_BUFF_SIZE];
-  unsigned int _length;
-};
+/* struct _number { */
+/*   unsigned int _type; */
+/*   union { */
+/*     long _l; */
+/*     double _d; */
+/*   } _data; */
+/* }; */
 
-struct _number {
-  unsigned int _type;
-  union {
-    long _l;
-    double _d;
-  } _data;
-};
+/* struct _pair { */
+/*   struct { */
+/*     struct cell *_car; */
+/*     struct cell *_cdr; */
+/*   } _data; */
+/* }; */
 
-struct _pair {
-  struct {
-    struct cell *_car;
-    struct cell *_cdr;
-  } _data;
-};
+/* struct _symbol { */
+/*   char _data[MAX_SYMBOL_LENGTH]; */
+/* }; */
 
-struct _symbol {
-  char _data[MAX_SYMBOL_LENGTH];
-};
+/* struct _object { */
+/* }; */
 
-struct cell {
-  unsigned int _type;
-  union {
-    struct _symbol *_sym;
-    struct _string *_str;
-    struct _number *_num;
-    struct _pair *_pair;
-  } _data;
-};
+/* struct cell { */
+/*   unsigned int _type; */
+/*   union { */
+/*     struct _symbol *_sym; */
+/*     struct _string *_str; */
+/*     struct _number *_num; */
+/*     struct _pair *_pair; */
+/*     struct _object *_nil; */
+/*     struct _object *_true; */
+/*     struct _object *_false; */
+/*   } _data; */
+/* }; */
 
-#define CELL_DATA(x) ((x)->_data)
-#define CELL_TYPE(x) ((x)->_type)
+/* #define CELL_DATA(x) ((x)->_data) */
+/* #define CELL_TYPE(x) ((x)->_type) */
 
-struct cell heap[2][HEAP_SIZE];
-int free_register = 0;
-int scan_register = 0;
-int current_heap_register = 0;
-int free_heap_register = 1;
-#define CURRENT_HEAP heap[current_heap_register]
-#define FREE_HEAP heap[free_heap_register]
+extern struct _object constant_object[T_MAX_CONSTANT];
+extern struct cell constant_cell[T_MAX_CONSTANT];
+/* struct cell constant_cell[T_MAX_CONSTANT] = {  */
+/*   {T_NIL, constant_object[T_NIL]}, */
+/*   {T_FALSE, constant_object[T_FALSE]}, */
+/*   {T_TRUE, constant_object[T_TRUE]} */
+/* }; */
 
-int is_atom(char *s);
-int is_symbol(char *s);
-int is_string(char *s);
-int is_number(char *s);
-int is_pair(char *s);
-int is_nil(char *s);
-int is_true(char *s);
-int is_false(char *s);
+/* struct cell heap[2][HEAP_SIZE]; */
+/* int free_register; */
+/* int scan_register; */
+/* int current_heap_register; */
+/* int free_heap_register; */
 
-int cell_is_atom(struct cell *cell);
-int cell_is_symbol(struct cell *cell);
-int cell_is_string(struct cell *cell);
-int cell_is_number(struct cell *cell);
-int cell_is_pair(struct cell *cell);
-int cell_is_nil(struct cell *cell);
-int cell_is_true(struct cell *cell);
-int cell_is_false(struct cell *cell);
+/* #define CURRENT_HEAP heap[current_heap_register] */
+/* #define FREE_HEAP heap[free_heap_register] */
 
-struct {
-  int (*is_atom)(struct cell *);
-  int (*is_string)(struct cell *);
-  int (*is_number)(struct cell *);
-  int (*is_symbol)(struct cell *);
-  int (*is_pair)(struct cell *);
-  int (*is_nil)(struct cell *);
-  int (*is_true)(struct cell *);
-  int (*is_false)(struct cell *);
-} cell_method = {
-  cell_is_atom,
-  cell_is_string,
-  cell_is_number,
-  cell_is_symbol,
-  cell_is_pair,
-  cell_is_nil,
-  cell_is_true,
-  cell_is_false
-};
+/* int is_atom(char *s); */
+/* int is_symbol(char *s); */
+/* int is_string(char *s); */
+/* int is_number(char *s); */
+/* int is_pair(char *s); */
+/* int is_nil(char *s); */
+/* int is_true(char *s); */
+/* int is_false(char *s); */
 
-struct cell *mk_cell(char *s);
-int free_cell(struct cell *cell);
-struct _symbol *mk_symbol(char *s);
-int free_symbol(struct _symbol *sym);
-struct _string *mk_string(char *s);
-int free_string(struct _string *str);
-struct _number *mk_number(char *s);
-int free_number(struct _number *num);
-struct _pair *mk_pair(char *s);
-int free_pair(struct _pair *pair);
+/* int cell_is_atom(struct cell *cell); */
+/* int cell_is_symbol(struct cell *cell); */
+/* int cell_is_string(struct cell *cell); */
+/* int cell_is_number(struct cell *cell); */
+/* int cell_is_pair(struct cell *cell); */
+/* int cell_is_nil(struct cell *cell); */
+/* int cell_is_true(struct cell *cell); */
+/* int cell_is_false(struct cell *cell); */
 
-int petty_print_expr(char *s);
+/* struct { */
+/*   int (*is_atom)(struct cell *); */
+/*   int (*is_string)(struct cell *); */
+/*   int (*is_number)(struct cell *); */
+/*   int (*is_symbol)(struct cell *); */
+/*   int (*is_pair)(struct cell *); */
+/*   int (*is_nil)(struct cell *); */
+/*   int (*is_true)(struct cell *); */
+/*   int (*is_false)(struct cell *); */
+/* } cell_method = { */
+/*   cell_is_atom, */
+/*   cell_is_string, */
+/*   cell_is_number, */
+/*   cell_is_symbol, */
+/*   cell_is_pair, */
+/*   cell_is_nil, */
+/*   cell_is_true, */
+/*   cell_is_false */
+/* }; */
+
+extern struct _cell_method cell_method;
+
+/* struct cell *mk_cell(char *s); */
+/* int free_cell(struct cell *cell); */
+/* struct _symbol *mk_symbol(char *s); */
+/* int free_symbol(struct _symbol *sym); */
+/* struct _string *mk_string(char *s); */
+/* int free_string(struct _string *str); */
+/* struct _number *mk_number(char *s); */
+/* int free_number(struct _number *num); */
+/* struct _pair *mk_pair(char *s); */
+/* int free_pair(struct _pair *pair); */
+
+/* int petty_print_expr(char *s); */
+/* int init_constant_cell(); */
 
 /* ===== private method ===== */
+int init_constant_cell() {
+  int i;
+
+  for( i = 0; i < T_MAX_CONSTANT; ++i) {
+    CELL_TYPE(constant_cell+i) = i;
+    CELL_DATA(constant_cell+i) = constant_object[i];
+  }
+
+  return 0;
+}
+
 int is_number_integer(char *s) {
   char *ps = s;
   for (; *ps != '\0'; ++ps) {
@@ -160,6 +191,7 @@ struct _number *mk_number_integer(char *s) {
   
   num->_type = NT_INTEGER;
   num->_data._l = atol(s);
+
   return num;
 }
 
@@ -168,6 +200,7 @@ struct _number *mk_number_float(char *s) {
 
   num->_type = NT_DOUBLE;
   num->_data._d = atof(s);
+
   return num;
 }
 
@@ -177,11 +210,13 @@ int is_real_pair(char *s) {
 
 int scan_start_and_end_char(char *s, char ec) {
   int current = 0;
+
   do {
     ++s;
     ++current;
   } while (ec != *s);
   ++current;
+
   return current;
 }
 
@@ -589,30 +624,30 @@ void test_func__is_nil(char *s) {
   printf("is_nil(%s)=%d\n", s, is_nil(s));
 }
 
-int main(void) {
-  /* mk_cell("abc"); */
-  /* mk_cell("123.321"); */
-  /* mk_cell("\"hello, world\""); */
-  /* mk_cell("(+ 1 2)"); */
+/* int main(void) { */
+/*   /\* mk_cell("abc"); *\/ */
+/*   /\* mk_cell("123.321"); *\/ */
+/*   /\* mk_cell("\"hello, world\""); *\/ */
+/*   /\* mk_cell("(+ 1 2)"); *\/ */
 
-  /* char *string = "((+ 1 2) 1 2 3)"; */
-  /* char buff[1024]; */
-  /* int start, end; */
-  /* get_pair_car_index(string, &start, &end); */
-  /* strncpy(buff, string + start, end - start); */
-  /* buff[end-start] = '\0'; */
-  /* printf("(car %s): %s, start:%d, end:%d\n", string, buff, start, end); */
+/*   /\* char *string = "((+ 1 2) 1 2 3)"; *\/ */
+/*   /\* char buff[1024]; *\/ */
+/*   /\* int start, end; *\/ */
+/*   /\* get_pair_car_index(string, &start, &end); *\/ */
+/*   /\* strncpy(buff, string + start, end - start); *\/ */
+/*   /\* buff[end-start] = '\0'; *\/ */
+/*   /\* printf("(car %s): %s, start:%d, end:%d\n", string, buff, start, end); *\/ */
 
-  /* test_func__get_pair_any_index("(+ 1 2 3)"); */
-  /* test_func__get_pair_any_index("(\"abc efg\" 1 2 3)"); */
-  /* test_func__get_pair_any_index("((1 2 3 4) 1 2 3 4 5)"); */
+/*   /\* test_func__get_pair_any_index("(+ 1 2 3)"); *\/ */
+/*   /\* test_func__get_pair_any_index("(\"abc efg\" 1 2 3)"); *\/ */
+/*   /\* test_func__get_pair_any_index("((1 2 3 4) 1 2 3 4 5)"); *\/ */
 
-  test_func__is_nil("'()");
-  test_func__is_nil("()");
-  test_func__is_nil("(+ 1 2 3)");
-  test_func__is_nil("'(+ 1 2 3)");
-  test_func__is_nil("  '(   )");
-  test_func__is_nil("  '(   )   ");
+/*   test_func__is_nil("'()"); */
+/*   test_func__is_nil("()"); */
+/*   test_func__is_nil("(+ 1 2 3)"); */
+/*   test_func__is_nil("'(+ 1 2 3)"); */
+/*   test_func__is_nil("  '(   )"); */
+/*   test_func__is_nil("  '(   )   "); */
 
-  return 0;
-}
+/*   return 0; */
+/* } */

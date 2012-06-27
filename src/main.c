@@ -1,4 +1,7 @@
 #include <stdio.h>
+
+/* #include "object.h" */
+
 char *version = "0.0.1";
 
 #define prompt "*>"
@@ -67,6 +70,9 @@ int syntax_check(char *expr) {
 int main(void) {
   printf("pscsh -- scheme interpreter\n");
   printf("version: %s\n", version);
+
+  init_constant_cell();
+
   repl();
   return 0;
 }
