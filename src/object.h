@@ -82,17 +82,13 @@ struct cell {
 
 struct _object constant_object[T_MAX_CONSTANT];
 struct cell constant_cell[T_MAX_CONSTANT];
-/* struct cell constant_cell[T_MAX_CONSTANT] = { */
-/*   {T_NIL, constant_object[T_NIL]}, */
-/*   {T_FALSE, constant_object[T_FALSE]}, */
-/*   {T_TRUE, constant_object[T_TRUE]} */
-/* }; */
 
 struct cell heap[2][HEAP_SIZE];
-int free_register = 0;
-int scan_register = 0;
-int current_heap_register = 0;
-int free_heap_register = 1;
+int free_register;
+int scan_register;
+int current_heap_register;
+int free_heap_register;
+
 #define CURRENT_HEAP heap[current_heap_register]
 #define FREE_HEAP heap[free_heap_register]
 
@@ -114,6 +110,26 @@ int cell_is_nil(struct cell *cell);
 int cell_is_true(struct cell *cell);
 int cell_is_false(struct cell *cell);
 
+/* struct _cell_method { */
+/*   int (*is_atom)(struct cell *); */
+/*   int (*is_string)(struct cell *); */
+/*   int (*is_number)(struct cell *); */
+/*   int (*is_symbol)(struct cell *); */
+/*   int (*is_pair)(struct cell *); */
+/*   int (*is_nil)(struct cell *); */
+/*   int (*is_true)(struct cell *); */
+/*   int (*is_false)(struct cell *); */
+/* } cell_method = { */
+/*   cell_is_atom, */
+/*   cell_is_string, */
+/*   cell_is_number, */
+/*   cell_is_symbol, */
+/*   cell_is_pair, */
+/*   cell_is_nil, */
+/*   cell_is_true, */
+/*   cell_is_false */
+/* }; */
+
 struct _cell_method {
   int (*is_atom)(struct cell *);
   int (*is_string)(struct cell *);
@@ -123,16 +139,7 @@ struct _cell_method {
   int (*is_nil)(struct cell *);
   int (*is_true)(struct cell *);
   int (*is_false)(struct cell *);
-} cell_method = {
-  cell_is_atom,
-  cell_is_string,
-  cell_is_number,
-  cell_is_symbol,
-  cell_is_pair,
-  cell_is_nil,
-  cell_is_true,
-  cell_is_false
-};
+} cell_method;
 
 struct cell *mk_cell(char *s);
 int free_cell(struct cell *cell);
@@ -146,6 +153,6 @@ struct _pair *mk_pair(char *s);
 int free_pair(struct _pair *pair);
 
 int petty_print_expr(char *s);
-int init_constant_cell();
+int init();
 
 #endif

@@ -1,6 +1,5 @@
 #include <stdio.h>
-
-/* #include "object.h" */
+#include "object.h"
 
 char *version = "0.0.1";
 
@@ -8,6 +7,7 @@ char *version = "0.0.1";
 #define BUFFSIZE 1024
 
 void repl();
+int eval(struct cell *cell);
 int read(char *buff);
 int syntax_check(char *expr);
 int parse_expr(char *expr);
@@ -20,10 +20,14 @@ void repl() {
       printf("[ERR]: syntax error\n");
     }
     else {
-      printf("%s\n", buff);
+      eval(mk_cell(buff));
     }
     printf(prompt);
   }
+}
+
+int eval(struct cell *cell) {
+  return 0;
 }
 
 int read(char *buff) {
@@ -70,8 +74,8 @@ int syntax_check(char *expr) {
 int main(void) {
   printf("pscsh -- scheme interpreter\n");
   printf("version: %s\n", version);
-
-  init_constant_cell();
+  
+  init();
 
   repl();
   return 0;

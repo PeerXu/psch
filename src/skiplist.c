@@ -1,0 +1,158 @@
+#include "skiplist.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
+node NIL;
+
+int random_level(int max) {
+  int k = 1;
+  while((rand() % 2) && k < max) k++;
+  return k;
+}
+
+node _skl_new_node(int l, key_type k, value_type v) {
+  node n;
+  n = malloc(sizeof(struct _node));
+  n->height = l;
+  n->key = k;
+  n->value = v;
+  n->levels = new_level(l);
+  return n;
+}
+
+int _skl_free_node(node n) {
+  if (NULL == n) {
+    return 1;
+  }
+
+  n->levels && free(n->levels);
+  n->levels = NULL;
+
+  free(n);
+  return 0;
+}
+
+int skl_init() {
+  int i;
+
+  srand(time(NULL));
+
+  NIL = _skl_new_node(MAX_NUMBER_OF_LEVELS, NIL_KEY, NIL_VALUE);
+  for (i=0; i<MAX_NUMBER_OF_LEVELS; i++) {
+    (NIL->levels[i]).cur_level = i;
+    (NIL->levels[i]).forward = NULL;
+  }
+
+  return 0;
+}
+
+skiplist *skl_new_list() {
+  skiplist *list;
+  node pn;
+  int i;
+
+  pn = _skl_new_node(MAX_NUMBER_OF_LEVELS, HEAD_KEY, HEAD_VALUE);
+  for (i = 0; i < MAX_NUMBER_OF_LEVELS; ++i) {
+    (pn->levels[i]).cur_level = i+1;
+    (pn->levels[i]).forward = NIL;
+  }
+
+  list = (struct _skiplist *)malloc(sizeof(struct _skiplist));
+  list->height = MAX_NUMBER_OF_LEVELS;
+  list->head = pn;
+  
+  return list;
+}
+
+node _skl_find_element_iter(node n, int l, key_type k) {
+  if (0 >= l || n == NIL) {
+    return NIL;
+  }
+
+  if (key_eq(n->key, k)) {
+    return n;
+  }
+
+  if ((n->levels[l-1]).forward != NIL && !key_lt(k, ((n->levels[l-1]).forward)->key)) {
+    return _skl_find_element_iter((n->levels[l-1]).forward, l, k);
+  } else {
+    return _skl_find_element_iter(n, l - 1, k);
+  }
+}
+
+node skl_find_element(skiplist *l, key_type k) {
+  return _skl_find_element_iter(l->head, l->height, k);
+}
+
+value_type skl_find(skiplist *l, key_type k) {
+  node n = skl_find_element(l, k);
+  return NIL == n ? -1 : n->value;
+}
+
+node _skl_find_element_lt(node n, int l, key_type k) {
+  node ret;
+  if (NIL == n) {
+    return NIL;
+  }
+  if ((n->levels[l]).forward != NIL && key_gt(((n->levels[l]).forward)->key, k)) {
+    return n;
+  }
+  ret = _skl_find_element_lt((n->levels[l]).forward, l, k);
+  return ret != NIL ? ret : n;
+}
+
+int _skl_update_level(skiplist *list, int level, node n) {
+  node prev_node = _skl_find_element_lt(list->head, level, n->key);
+
+  (n->levels[level]).forward = (prev_node->levels[level]).forward;
+  (prev_node->levels[level]).forward = n;
+
+  return 0;
+}
+
+int skl_insert(skiplist *l, key_type k, value_type v) {
+  int i;
+  node n = _skl_new_node(random_level(l->height), k, v);
+
+  for (i = 0; i < n->height; ++i) {
+    _skl_update_level(l, i, n);
+  }
+
+  return 0;
+}
+
+value_type skl_delete(skiplist *l, key_type k) {
+  return 0;
+}
+
+int skl_free_list(skiplist *l) {
+  return 0;
+}
+
+#ifdef __DEBUG
+int _skl_print_list_level(node n, int level) {
+  node p;
+  printf("%3d: ", level);
+  for (p = n; p != NIL; p = (p->levels[level-1]).forward) {
+    printf("(%s, %d), ", p->key, p->value);
+  }
+  printf("\n");
+  return 0;
+}
+
+int skl_print_list(skiplist *l) {
+  int i;
+  node p;
+
+  for (i = l->height; i > 0; --i) {
+    if (!((l->head->levels[i-1]).forward == NIL)) {
+      _skl_print_list_level(l->head, i);
+    }
+  }
+  
+  return 0;
+}
+#endif
