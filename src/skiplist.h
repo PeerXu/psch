@@ -49,8 +49,8 @@ extern node NIL;
 #define HEAD_KEY (char *)""
 #define HEAD_VALUE (int)-1
 
-#define key_gt(a, b) ((b) && strcmp((a), (b)) == 1)
-#define key_lt(a, b) (!(b) || strcmp((a), (b)) == -1)
+#define key_gt(a, b) ((b) && strcmp((a), (b)) > 0)
+#define key_lt(a, b) (!(b) || strcmp((a), (b)) < 0)
 #define key_eq(a, b) ((a) && (b) && strcmp((a), (b)) == 0)
 
 #define new_level(l) (struct _level *)malloc((l)*sizeof(struct _level))

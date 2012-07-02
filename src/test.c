@@ -76,5 +76,11 @@ int main(void) {
   
   skl_print_list(l);
 
+  skl_delete(l, "10");
+
+  skl_print_list(l);
+
+  skl_free_list(l);
+
   return 0;
 }

@@ -28,7 +28,7 @@ int _skl_free_node(node n) {
     return 1;
   }
 
-  n->levels && free(n->levels);
+  if(n->levels) free(n->levels);
   n->levels = NULL;
 
   free(n);
@@ -68,7 +68,7 @@ skiplist *skl_new_list() {
 }
 
 node _skl_find_element_iter(node n, int l, key_type k) {
-  if (0 >= l || n == NIL) {
+  if (0 > l || n == NIL) {
     return NIL;
   }
 
@@ -97,18 +97,19 @@ node _skl_find_element_lt(node n, int l, key_type k) {
   if (NIL == n) {
     return NIL;
   }
-  if ((n->levels[l]).forward != NIL && key_gt(((n->levels[l]).forward)->key, k)) {
+  if ((n->levels[l]).forward != NIL && !key_lt(((n->levels[l]).forward)->key, k)) {
     return n;
   }
   ret = _skl_find_element_lt((n->levels[l]).forward, l, k);
   return ret != NIL ? ret : n;
 }
 
-int _skl_update_level(skiplist *list, int level, node n) {
+int _skl_update_level_insert(skiplist *list, int level, node n) {
   node prev_node = _skl_find_element_lt(list->head, level, n->key);
 
   (n->levels[level]).forward = (prev_node->levels[level]).forward;
   (prev_node->levels[level]).forward = n;
+  (prev_node->levels[level]).cur_level = level;
 
   return 0;
 }
@@ -118,18 +119,50 @@ int skl_insert(skiplist *l, key_type k, value_type v) {
   node n = _skl_new_node(random_level(l->height), k, v);
 
   for (i = 0; i < n->height; ++i) {
-    _skl_update_level(l, i, n);
+    _skl_update_level_insert(l, i, n);
   }
 
   return 0;
 }
 
+int _skl_update_level_delete(skiplist *list, int level, node n) {
+  node prev_node = _skl_find_element_lt(list->head, level, n->key);
+
+  (prev_node->levels[level]).forward = (n->levels[level]).forward;
+
+  return 0;
+}
+
 value_type skl_delete(skiplist *l, key_type k) {
+  int i;
+  node n = skl_find_element(l, k);
+
+  if (NIL == n) {
+    return (value_type)-1;
+  }
+
+  for (i = 0; i < n->height; ++i) {
+    _skl_update_level_delete(l, i, n);
+  }
+
+  _skl_free_node(n);
+
+  return 0;
+}
+
+int _skl_free_list_iter(node n) {
+  if (NIL == n) {
+    return 0;
+  }
+
+  _skl_free_list_iter((n->levels[0]).forward);
+  _skl_free_node(n);
+
   return 0;
 }
 
 int skl_free_list(skiplist *l) {
-  return 0;
+  return _skl_free_list_iter(l->head);
 }
 
 #ifdef __DEBUG
