@@ -6,8 +6,9 @@
 #define MAX_NUMBER_OF_LEVELS 16
 #define MAX_LEVEL (MAX_NUMBER_OF_LEVELS-1)
 
+#define KEY_BUFF_SIZE 64
 typedef char* key_type;
-typedef int value_type;
+typedef struct cell* value_type;
 
 typedef struct _level {
   struct _node *forward;
@@ -44,10 +45,10 @@ int skl_print_list(skiplist *l);
 extern node NIL;
 
 #define NIL_KEY (char *)NULL
-#define NIL_VALUE (int)-1
+#define NIL_VALUE (struct cell *)NULL
 
 #define HEAD_KEY (char *)""
-#define HEAD_VALUE (int)-1
+#define HEAD_VALUE (struct cell *)NULL
 
 #define key_gt(a, b) ((b) && strcmp((a), (b)) > 0)
 #define key_lt(a, b) (!(b) || strcmp((a), (b)) < 0)

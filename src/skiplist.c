@@ -13,11 +13,33 @@ int random_level(int max) {
   return k;
 }
 
+key_type _skl_new_key(key_type k) {
+  int len;
+  key_type r = NULL;
+
+  if (!k) {
+    return (key_type)NULL;
+  }
+
+  len = strlen(k);
+  len = len < KEY_BUFF_SIZE ? len : KEY_BUFF_SIZE;
+
+  r = malloc(sizeof(char) * KEY_BUFF_SIZE);
+  strncpy(r, k, len);
+  r[len] = '\0';
+
+  return r;
+}
+
 node _skl_new_node(int l, key_type k, value_type v) {
+  int len;
   node n;
   n = malloc(sizeof(struct _node));
   n->height = l;
-  n->key = k;
+
+  /* n->key = k; */
+  n->key = _skl_new_key(k);
+
   n->value = v;
   n->levels = new_level(l);
   return n;
@@ -27,6 +49,9 @@ int _skl_free_node(node n) {
   if (NULL == n) {
     return 1;
   }
+
+  if(n->key) free(n->key);
+  n->key = NULL;
 
   if(n->levels) free(n->levels);
   n->levels = NULL;
@@ -89,7 +114,7 @@ node skl_find_element(skiplist *l, key_type k) {
 
 value_type skl_find(skiplist *l, key_type k) {
   node n = skl_find_element(l, k);
-  return NIL == n ? -1 : n->value;
+  return NIL == n ? NULL : n->value;
 }
 
 node _skl_find_element_lt(node n, int l, key_type k) {
@@ -170,7 +195,7 @@ int _skl_print_list_level(node n, int level) {
   node p;
   printf("%3d: ", level);
   for (p = n; p != NIL; p = (p->levels[level-1]).forward) {
-    printf("(%s, %d), ", p->key, p->value);
+    printf("(%s, 0x%08x), ", p->key, p->value);
   }
   printf("\n");
   return 0;
